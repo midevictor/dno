@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Be My Valentine 💘</title>
+  <style>
+    :root{
+      --bg1:#ff4fa3;
+      --bg2:#ffb6d9;
+      --card: rgba(255,255,255,.14);
+      --stroke: rgba(255,255,255,.22);
+      --text: #fff;
+      --shadow: 0 18px 60px rgba(0,0,0,.22);
+      --radius: 26px;
+      --btn:#ffffff;
+      --btnText:#2b2035;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--text);
+      overflow:hidden;
+      background:
+        radial-gradient(1000px 650px at 25% 18%, rgba(255,255,255,.18), transparent 58%),
+        radial-gradient(900px 650px at 80% 15%, rgba(255,255,255,.10), transparent 62%),
+        linear-gradient(155deg, var(--bg1), var(--bg2));
+      background-size: 140% 140%;
+      animation: bgFlow 22s ease-in-out infinite;
+    }
+    @keyframes bgFlow{
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+
+    /* soft vignette */
+    body:before{
+      content:"";
+      position:fixed; inset:-40px;
+      background: radial-gradient(circle at 50% 25%, transparent 40%, rgba(0,0,0,.33) 90%);
+      pointer-events:none;
+    }
+
+    .app{height:100%; display:grid; place-items:center; padding:24px; position:relative;}
+
+    .stage{
+      width:min(920px, 95vw);
+      height:min(640px, 86vh);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--card), rgba(255,255,255,.08));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* ✅ scrollable screens so nothing breaks on small phones */
+    .screen{
+      position:absolute; inset:0;
+      display:block;                 /* was grid */
+      padding: clamp(18px, 4vw, 44px);
+      overflow:auto;                 /* allow scroll */
+      -webkit-overflow-scrolling: touch;
+      opacity:0;
+      transform: translateY(14px) scale(.99);
+      pointer-events:none;
+      transition: opacity .45s ease, transform .45s cubic-bezier(.2,.9,.2,1);
+    }
+    .screen.active{opacity:1; transform: translateY(0) scale(1); pointer-events:auto;}
+
+    /* keep your centered layout, but within a scrollable screen */
+    .screen .stack{
+      min-height: 100%;
+      display:grid;
+      place-items:center;
+      align-content:center;
+    }
+
+    /* Minimal floating hearts */
+    .hearts{position:absolute; inset:0; pointer-events:none; overflow:hidden; opacity:.55;}
+    .heart{position:absolute; transform: translateY(120%); animation: floatUp linear forwards; user-select:none; filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));}
+    @keyframes floatUp{to{ transform: translateY(-170%); opacity:0 }}
+
+    h1{
+      margin:0;
+      font-size: clamp(36px, 5vw, 62px);
+      letter-spacing: -0.02em;
+      text-shadow: 0 18px 40px rgba(0,0,0,.18);
+    }
+
+    .sub{
+      margin: 10px 0 0;
+      opacity:.95;
+      font-size: clamp(14px, 1.6vw, 18px);
+      line-height:1.5;
+      max-width: 46ch;
+      text-align:center;
+    }
+
+    .stack{display:grid; gap: 14px; place-items:center; text-align:center;}
+    .tiny{font-size: 12px; opacity:.85; margin:0;}
+
+    .btn{
+      border:0;
+      border-radius: 999px;
+      padding: 14px 18px;
+      font-weight: 850;
+      font-size: 15px;
+      cursor:pointer;
+      background: var(--btn);
+      color: var(--btnText);
+      box-shadow: 0 16px 40px rgba(0,0,0,.22);
+      transition: transform .15s ease, filter .2s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{transform: translateY(-1px)}
+    .btn:active{transform: translateY(1px) scale(.99)}
+
+    .btn.ghost{
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.95);
+      border: 1px solid var(--stroke);
+      box-shadow:none;
+      font-weight: 750;
+    }
+
+    /* ✅ Meme card smaller so it fits */
+    .meme{
+      width: min(360px, 92vw);
+      border-radius: 18px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.20);
+      box-shadow: 0 14px 40px rgba(0,0,0,.14);
+      overflow:hidden;
+      transform: translateZ(0);
+    }
+
+    /* ✅ fixed-ish height so memes don't blow up the screen */
+    .meme img{
+      width:100%;
+      height: clamp(150px, 22vw, 200px);
+      object-fit: cover;
+      display:block;
+      background: rgba(0,0,0,.10);
+    }
+
+    .memeCap{
+      padding: 8px 10px 10px;
+      font-size: 12px;
+      opacity:.95;
+      line-height:1.35;
+    }
+
+    /* Question screen */
+    .q{
+      font-size: clamp(28px, 4.2vw, 52px);
+      margin:0;
+      text-shadow: 0 18px 40px rgba(0,0,0,.16);
+    }
+
+    .meter{
+      width:min(520px, 92vw);
+      border-radius:999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.10);
+      padding: 8px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.12);
+    }
+    .bar{
+      height: 14px;
+      width: 0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(255,255,255,.95), rgba(255,255,255,.55));
+      transition: width 1.2s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .choice{
+      width:min(520px, 92vw);
+      height: 110px;
+      position:relative;
+      margin-top: 6px;
+    }
+
+    #yesBtn{position:absolute; left:0; top:0;}
+
+    #noBtn{
+      position:absolute;
+      left:0; top:0;
+      transform: translate(var(--x), var(--y));
+      will-change: transform;
+    }
+
+    .taunt{margin:0; font-size: 12px; opacity:.85;}
+
+    /* Tiny sparkle pop */
+    .pop{
+      position:fixed;
+      transform: translate(-50%,-50%);
+      pointer-events:none;
+      animation: pop 700ms ease-out forwards;
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,.2));
+      z-index: 60;
+    }
+    @keyframes pop{
+      0%{opacity:0; transform: translate(-50%,-50%) scale(.6)}
+      10%{opacity:1}
+      100%{opacity:0; transform: translate(-50%,-120%) scale(1.25)}
+    }
+
+    /* Confetti canvas */
+    #confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index: 70; display:none;}
+
+    /* Modal */
+    .modal{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.42);
+      display:none;
+      place-items:center;
+      padding: 18px;
+      z-index: 80;
+    }
+    .modal.show{display:grid}
+    .modalCard{
+      width:min(860px, 96vw);
+      max-height: min(680px, 86vh);
+      overflow:auto; /* already scrollable */
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.10));
+      border: 1px solid rgba(255,255,255,.24);
+      box-shadow: 0 30px 90px rgba(0,0,0,.35);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: clamp(18px, 3.6vw, 28px);
+      -webkit-overflow-scrolling: touch;
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+    .modalTitle{margin:0 0 8px; font-size: clamp(24px, 3.2vw, 40px);}
+    .modalP{margin:0 0 14px; opacity:.95; line-height:1.5; white-space:pre-wrap;}
+
+    /* Music button */
+    .musicBtn{
+      position:absolute;
+      right: 14px;
+      bottom: 14px;
+      border-radius: 999px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.95);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 14px 40px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform .15s ease;
+      z-index: 5;
+    }
+    .musicBtn:hover{transform: translateY(-1px)}
+    .musicBtn:active{transform: translateY(1px) scale(.99)}
+
+    /* Polaroid pile */
+    .pile{
+      position:relative;
+      width: min(820px, 92vw);
+      height: clamp(260px, 42vh, 420px);
+      margin-top: 12px;
+      overflow: visible;
+    }
+
+    .pol{
+      position:absolute;
+      width: clamp(140px, 26vw, 220px);
+      background: rgba(255,255,255,.92);
+      color: #2b2035;
+      border-radius: 18px;
+      padding: 10px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.16);
+      transform: translate(var(--fx, 0px), var(--fy, 0px)) rotate(var(--fr, 0deg)) scale(.86);
+      opacity: 0;
+      will-change: transform, opacity;
+      transform-origin: 50% 80%;
+    }
+
+    .pol.in{
+      animation: scatterIn 850ms cubic-bezier(.16,1.15,.2,1) var(--delay) both;
+    }
+
+    @keyframes scatterIn{
+      0%{
+        transform: translate(var(--fx, 0px), var(--fy, 0px)) rotate(var(--fr, 0deg)) scale(.86);
+        opacity: 0;
+      }
+      70%{
+        transform: translate(calc(var(--tx, 0px) + 10px), calc(var(--ty, 0px) - 10px)) rotate(var(--tr, 0deg)) scale(1.06);
+        opacity: 1;
+      }
+      100%{
+        transform: translate(var(--tx, 0px), var(--ty, 0px)) rotate(var(--tr, 0deg)) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* ✅ show full picture (no crop) */
+    .pol img{
+      width:100%;
+      height: 150px;
+      object-fit: contain;
+      border-radius: 14px;
+      display:block;
+      background: rgba(0,0,0,.06);
+    }
+
+    .cap{text-align:center; font-size: 12px; margin-top: 8px; opacity:.9;}
+
+    @media (prefers-reduced-motion: reduce){
+      *{animation:none !important; transition:none !important}
+      body{background-size:100% 100%}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+
+  <!-- Put your song here: assets/music/song.mp3 -->
+  <audio id="bgm" src="assets/music/song.mp3" preload="auto" loop playsinline></audio>
+
+  <div class="app">
+    <div class="stage" id="stage">
+      <div class="hearts" id="hearts"></div>
+      <button class="musicBtn" id="musicBtn" aria-label="Toggle music" title="Toggle music">🔈</button>
+
+      <!-- Home -->
+      <section class="screen active" id="home" aria-label="Home">
+        <div class="stack">
+          <div style="font-size:54px; filter: drop-shadow(0 18px 40px rgba(0,0,0,.18));">💘</div>
+          <h1>Hey, Oyin baby</h1>
+          <p class="sub">I made you a tiny thing.</p>
+
+          <div class="meme" aria-label="Cute meme">
+            <img id="homeMeme" alt="Cute meme" />
+            <div class="memeCap" id="homeMemeCap"></div>
+          </div>
+
+          <button class="btn" id="openBtn">Open this to see how much I love you</button>
+          <button class="btn ghost" id="sparkBtn" style="width:72px">💖</button>
+          <p class="tiny">tap the heart for sparkles</p>
+        </div>
+      </section>
+
+      <!-- Ask -->
+      <section class="screen" id="ask" aria-label="Valentine question">
+        <div class="stack" style="gap:12px">
+          <h2 class="q">Will you be my Valentine?</h2>
+
+          <div class="meter" aria-label="Love meter">
+            <div class="bar" id="bar"></div>
+          </div>
+          <p class="tiny" id="meterText">measuring…</p>
+
+          <div class="choice" id="choice">
+            <button class="btn" id="yesBtn">Yes 💖</button>
+            <button class="btn ghost" id="noBtn" style="--x: 320px; --y: 0px;">No 🙃</button>
+          </div>
+
+          <!-- ✅ removed oversized inline width -->
+          <div class="meme" aria-label="Cute meme">
+            <img id="askMeme" alt="Cute meme" />
+            <div class="memeCap" id="askMemeCap"></div>
+          </div>
+
+          <p class="taunt" id="taunt">(Try catching up with “No”.)</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Celebration modal -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Celebration">
+    <div class="modalCard">
+      <div class="row">
+        <div>
+          <h3 class="modalTitle">Yay 💘</h3>
+          <p class="modalP" id="loveMsg"></p>
+        </div>
+        <button class="btn ghost" id="closeModal">Close</button>
+      </div>
+
+      <div class="meme" style="margin-top:10px">
+        <img id="yesMeme" alt="Cute meme" />
+        <div class="memeCap" id="yesMemeCap"></div>
+      </div>
+
+      <p class="tiny" style="margin-top:12px">Now the important part: us 😌</p>
+      <div class="pile" id="usGrid"></div>
+
+      <!-- <p class="tiny" style="margin-top:12px; opacity:.8">
+        Tip: Put your images in <strong>assets/us/</strong> and memes in <strong>assets/memes/</strong> (see the arrays in the JS).
+      </p> -->
+    </div>
+  </div>
+
+  <script>
+    // ---------------------------------
+    // Files to add BEFORE hosting:
+    //   assets/us/1.jpg, 2.jpg, ...
+    //   assets/memes/home1.jpg, ...
+    //   assets/music/song.mp3
+    // ---------------------------------
+
+    const couplePhotos = [
+      "assets/us/1.jpg",
+      "assets/us/2.jpg",
+      "assets/us/3.jpg",
+      "assets/us/4.jpg"
+    ];
+
+    const homeMemes = [
+      { src: "assets/memes/home1.jpg", cap: "me trying to act normal around you" },
+      { src: "assets/memes/home2.jpg", cap: "warning: this page contains extreme affection" },
+      { src: "assets/memes/home3.jpg", cap: "you + me = yes." }
+    ];
+
+    const askMemes = [
+      { src: "assets/memes/ask1.jpg", cap: " hi, i’m cute" },
+      { src: "assets/memes/ask2.jpg", cap: "the ‘no’ button is shy" },
+      { src: "assets/memes/ask3.jpg", cap: "i made this with my whole heart" }
+    ];
+
+    const yesMemes = [
+    //   { src: "assets/memes/yes1.jpg", cap: "correct answer detected ✅" },
+      { src: "assets/memes/yes2.jpg", cap: "we did it. we’re adorable." },
+      { src: "assets/memes/yes3.jpg", cap: "now come here 😤💘" }
+    ];
+
+    // Helpers
+    const $ = (s) => document.querySelector(s);
+    const rand = (a,b) => Math.random()*(b-a)+a;
+
+    // ---------------------------------
+    // MUSIC
+    // Browsers usually block autoplay with sound.
+    // So: try on load + guaranteed start on first click/tap.
+    // ---------------------------------
+    const bgm = $("#bgm");
+    const musicBtn = $("#musicBtn");
+
+    function updateMusicIcon(){
+      if (!musicBtn || !bgm) return;
+      musicBtn.textContent = bgm.paused ? "🔈" : "🔊";
+    }
+
+    async function playMusic(){
+      if (!bgm) return;
+      try{
+        bgm.volume = 0.35;
+        await bgm.play();
+      }catch(_){
+        // blocked until user gesture — normal.
+      }finally{
+        updateMusicIcon();
+      }
+    }
+
+    function pauseMusic(){
+      if (!bgm) return;
+      bgm.pause();
+      updateMusicIcon();
+    }
+
+    function toggleMusic(){
+      if (!bgm) return;
+      if (bgm.paused) playMusic();
+      else pauseMusic();
+    }
+
+    if (musicBtn){
+      musicBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMusic();
+      });
+    }
+
+    window.addEventListener("load", () => {
+      playMusic();
+      updateMusicIcon();
+    });
+
+    window.addEventListener("pointerdown", () => playMusic(), { once:true });
+
+    // ---------------------------------
+    // Minimal floating hearts
+    // ---------------------------------
+    const heartsLayer = $("#hearts");
+    function spawnHeart(){
+      const h = document.createElement("div");
+      h.className = "heart";
+      h.textContent = Math.random() < 0.5 ? "💗" : "💘";
+      h.style.left = rand(6, 94) + "%";
+      h.style.animationDuration = rand(6.0, 10.0) + "s";
+      h.style.opacity = rand(0.22, 0.60);
+      h.style.fontSize = rand(16, 22) + "px";
+      heartsLayer.appendChild(h);
+      setTimeout(() => h.remove(), 11000);
+    }
+    setInterval(spawnHeart, 950);
+
+    // Tiny sparkle pops
+    const pops = ["✨","💖","💗","💘","💕"];
+    function popAt(x,y){
+      const el = document.createElement("div");
+      el.className = "pop";
+      el.textContent = pops[Math.floor(rand(0,pops.length))];
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      el.style.fontSize = rand(18, 28) + "px";
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 800);
+    }
+
+    // Safe img setter
+    function setImg(imgEl, src){
+      imgEl.src = src;
+      imgEl.onerror = () => { imgEl.style.display = "none"; };
+    }
+    function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+    // Memes
+    const hm = pick(homeMemes);
+    setImg($("#homeMeme"), hm.src);
+    $("#homeMemeCap").textContent = hm.cap;
+
+    const am = pick(askMemes);
+    setImg($("#askMeme"), am.src);
+    $("#askMemeCap").textContent = am.cap;
+
+    function setYesMeme(){
+      const ym = pick(yesMemes);
+      setImg($("#yesMeme"), ym.src);
+      $("#yesMemeCap").textContent = ym.cap;
+    }
+
+    // Screens
+    const home = $("#home");
+    const ask = $("#ask");
+    const bar = $("#bar");
+    const meterText = $("#meterText");
+
+    function goAsk(){
+      home.classList.remove("active");
+      ask.classList.add("active");
+
+      bar.style.width = "0%";
+      meterText.textContent = "measuring…";
+      setTimeout(()=>{ bar.style.width = "40%"; meterText.textContent = "butterflies detected…"; }, 120);
+      setTimeout(()=>{ bar.style.width = "78%"; meterText.textContent = "heart doing a little dance…"; }, 850);
+      setTimeout(()=>{ bar.style.width = "100%"; meterText.textContent = "result: yes is correct 💘"; }, 1500);
+
+      setTimeout(placeNoStart, 120);
+    }
+
+    $("#openBtn").addEventListener("click", (e) => {
+      popAt(e.clientX, e.clientY);
+      playMusic(); // user gesture -> audio will start reliably
+      goAsk();
+    });
+
+    $("#sparkBtn").addEventListener("click", (e) => {
+      popAt(e.clientX, e.clientY);
+      popAt(e.clientX + rand(-60, 60), e.clientY + rand(-40, 40));
+      popAt(e.clientX + rand(-60, 60), e.clientY + rand(-40, 40));
+    });
+
+    // No-button chase
+    const choice = $("#choice");
+    const yesBtn = $("#yesBtn");
+    const noBtn = $("#noBtn");
+    const taunt = $("#taunt");
+    let dodges = 0;
+
+    function placeNoStart(){
+      const row = choice.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      const pad = 8;
+      const x = Math.max(pad, row.width - b.width - pad);
+      noBtn.style.setProperty("--x", x + "px");
+      noBtn.style.setProperty("--y", "0px");
+    }
+
+    function moveNo(){
+      const row = choice.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      const yes = yesBtn.getBoundingClientRect();
+      const pad = 8;
+
+      const maxX = Math.max(pad, row.width - b.width - pad);
+      const maxY = Math.max(pad, row.height - b.height - pad);
+
+      const yesLocalRight = (yes.right - row.left) + pad;
+
+      let x = rand(Math.min(yesLocalRight, maxX), maxX);
+      let y = rand(0, maxY);
+
+      noBtn.style.setProperty("--x", x + "px");
+      noBtn.style.setProperty("--y", y + "px");
+
+      dodges++;
+      const lines = [
+        "nope.",
+        "try again 😇",
+        "almost!",
+        "you’re chasing it hehe",
+        "this is your life now",
+        "ahnnn stop it",
+        "ok just click yes already 💘"
+      ];
+      taunt.textContent = lines[Math.min(dodges-1, lines.length-1)];
+    }
+
+    noBtn.addEventListener("pointerenter", moveNo);
+    noBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); moveNo(); });
+
+    window.addEventListener("resize", () => {
+      if (ask.classList.contains("active")) placeNoStart();
+      if (modal.classList.contains("show")) layoutPolaroidPile();
+    });
+
+    // YES flow
+    const modal = $("#modal");
+    const closeModal = $("#closeModal");
+    const loveMsg = $("#loveMsg");
+    const usGrid = $("#usGrid");
+
+    const loveLines = [
+      "Ok so… I’m obsessed with you.",
+      "I choose you. Repeatedly.",
+      "You’re my favorite person to be near.",
+      "This is me being brave + cute at the same time.",
+      "You make my heart so happy.",
+      "Let’s make a million memories.",
+      "You’re my forever valentine."
+    ];
+
+    async function renderUsPhotos(){
+      usGrid.innerHTML = "";
+      if (!couplePhotos.length){
+        usGrid.innerHTML = `<div style="position:relative; width:100%" class="tiny">Add your photos to assets/us/ and list them in <strong>couplePhotos</strong>.</div>`;
+        return;
+      }
+
+      const imgs = [];
+      couplePhotos.forEach((src, i) => {
+        const card = document.createElement("div");
+        card.className = "pol";
+        card.innerHTML = `
+          <img src="${src}" alt="Us ${i+1}" />
+          <div class="cap">us 💞</div>
+        `;
+        const img = card.querySelector("img");
+        img.onerror = () => { card.remove(); };
+        imgs.push(img);
+        usGrid.appendChild(card);
+      });
+
+      // Wait for images to be ready so card sizes are real.
+      await Promise.all(imgs.map(img => {
+        if (img.decode) return img.decode().catch(() => {});
+        if (img.complete) return Promise.resolve();
+        return new Promise(res => img.addEventListener("load", res, { once:true }));
+      }));
+
+      layoutPolaroidPile();
+      setTimeout(layoutPolaroidPile, 180);
+    }
+
+    // --------- NO-OVERLAP SCATTER (collision checks) ----------
+    function rectsOverlap(a, b, gap){
+      return !(
+        a.x + a.w + gap <= b.x ||
+        b.x + b.w + gap <= a.x ||
+        a.y + a.h + gap <= b.y ||
+        b.y + b.h + gap <= a.y
+      );
+    }
+
+    function layoutPolaroidPile(){
+      const pileW = usGrid.clientWidth;
+      const pileH = usGrid.clientHeight;
+      const cards = Array.from(usGrid.querySelectorAll(".pol"));
+      if (!pileW || !pileH || !cards.length) return;
+
+      const placed = [];
+      const edge = 8;     // keep away from edges
+      const gap  = 12;    // spacing between polaroids
+      const triesPerCard = 120;
+
+      cards.forEach((card, i) => {
+        const w = card.offsetWidth;
+        const h = card.offsetHeight;
+
+        const maxX = Math.max(edge, pileW - w - edge);
+        const maxY = Math.max(edge, pileH - h - edge);
+
+        // fallback if pile is too tight
+        if (maxX <= edge || maxY <= edge){
+          card.style.setProperty("--tx", `${edge}px`);
+          card.style.setProperty("--ty", `${edge}px`);
+        }
+
+        let best = null;
+
+        for (let t = 0; t < triesPerCard; t++){
+          const x = rand(edge, maxX);
+          const y = rand(edge, maxY);
+          const r = { x, y, w, h };
+
+          // hard collision check first
+          let collision = false;
+          for (const p of placed){
+            if (rectsOverlap(r, p, gap)){ collision = true; break; }
+          }
+          if (!collision){
+            best = { x, y };
+            break;
+          }
+
+          // if we can't find perfect, keep a "least-bad" candidate
+          // score = total overlap area (smaller is better)
+          let score = 0;
+          for (const p of placed){
+            const ox = Math.max(0, Math.min(r.x + r.w, p.x + p.w) - Math.max(r.x, p.x));
+            const oy = Math.max(0, Math.min(r.y + r.h, p.y + p.h) - Math.max(r.y, p.y));
+            score += ox * oy;
+          }
+          if (!best || score < best.score) best = { x, y, score };
+        }
+
+        const x = best?.x ?? edge;
+        const y = best?.y ?? edge;
+        placed.push({ x, y, w, h });
+
+        // fly-in from below with a little chaos
+        const fx = rand(-pileW * 0.55, pileW * 0.55);
+        const fy = pileH + rand(80, 220);
+
+        card.style.setProperty("--tx", `${x}px`);
+        card.style.setProperty("--ty", `${y}px`);
+        card.style.setProperty("--tr", `${rand(-10, 10).toFixed(2)}deg`);
+        card.style.setProperty("--fx", `${fx.toFixed(1)}px`);
+        card.style.setProperty("--fy", `${fy.toFixed(1)}px`);
+        card.style.setProperty("--fr", `${rand(-32, 32).toFixed(2)}deg`);
+        card.style.setProperty("--delay", `${i * 90}ms`);
+
+        // slight z-stacking so it feels natural
+        card.style.zIndex = String(10 + i);
+
+        // retrigger animation
+        card.classList.remove("in");
+        void card.offsetWidth;
+        card.classList.add("in");
+      });
+    }
+
+    // Confetti
+    const confettiCanvas = $("#confetti");
+    const ctx = confettiCanvas.getContext("2d");
+    let confettiPieces = [];
+    let confettiOn = false;
+
+    function resizeCanvas(){
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti(ms = 1600){
+      confettiCanvas.style.display = "block";
+      confettiOn = true;
+      confettiPieces = Array.from({length: 140}, () => ({
+        x: rand(0, confettiCanvas.width),
+        y: rand(-confettiCanvas.height, 0),
+        w: rand(6, 12),
+        h: rand(8, 18),
+        vx: rand(-2.0, 2.0),
+        vy: rand(2.0, 4.8),
+        rot: rand(0, Math.PI),
+        vr: rand(-0.12, 0.12),
+        a: rand(0.65, 1)
+      }));
+      requestAnimationFrame(tickConfetti);
+      setTimeout(() => {
+        confettiOn = false;
+        setTimeout(() => { confettiCanvas.style.display = "none"; }, 500);
+      }, ms);
+    }
+
+    function tickConfetti(){
+      ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+      for (const p of confettiPieces){
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.03;
+        p.rot += p.vr;
+
+        if (p.y > confettiCanvas.height + 50) p.y = rand(-200, -20);
+        if (p.x < -50) p.x = confettiCanvas.width + 50;
+        if (p.x > confettiCanvas.width + 50) p.x = -50;
+
+        ctx.save();
+        ctx.globalAlpha = p.a;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = `hsla(${Math.floor(rand(0,360))}, 90%, 72%, 1)`;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      }
+      if (confettiOn) requestAnimationFrame(tickConfetti);
+    }
+
+    $("#yesBtn").addEventListener("click", async (e) => {
+      popAt(e.clientX, e.clientY);
+      loveMsg.textContent = loveLines[Math.floor(rand(0, loveLines.length))];
+      setYesMeme();
+
+      modal.classList.add("show");
+
+      await renderUsPhotos();
+      startConfetti(1700);
+
+      playMusic(); // user gesture
+    });
+
+    closeModal.addEventListener("click", () => modal.classList.remove("show"));
+    modal.addEventListener("pointerdown", (e) => {
+      if (e.target === modal) modal.classList.remove("show");
+    });
+  </script>
+</body>
+</html>
